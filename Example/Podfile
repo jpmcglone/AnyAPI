@@ -1,8 +1,10 @@
+platform :ios, '9.0'
 use_frameworks!
 
 target 'AnyAPI_Example' do
   pod 'AnyAPI', :path => '../'
-
+  pod 'FlowDK'
+  
   target 'AnyAPI_Tests' do
     inherit! :search_paths
 

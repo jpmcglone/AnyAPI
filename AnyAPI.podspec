@@ -1,42 +1,30 @@
-#
-# Be sure to run `pod lib lint AnyAPI.podspec' to ensure this is a
-# valid spec before submitting.
-#
-# Any lines starting with a # are optional, but their use is encouraged
-# To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html
-#
-
 Pod::Spec.new do |s|
   s.name             = 'AnyAPI'
   s.version          = '0.1.0'
-  s.summary          = 'A short description of AnyAPI.'
-
-# This description is used to generate tags and improve search results.
-#   * Think: What does it do? Why did you write it? What is the focus?
-#   * Try to keep it short, snappy and to the point.
-#   * Write the description between the DESC delimiters below.
-#   * Finally, don't worry about the indent, CocoaPods strips it!
+  s.summary          = 'AnyAPI lets you easily interface with any HTTP API on the internet'
 
   s.description      = <<-DESC
-TODO: Add long description of the pod here.
+AnyAPI lets you easily interface with any HTTP API on the internet! AnyAPI uses Alamofire and ObjectMapper under the hood
                        DESC
 
-  s.homepage         = 'https://github.com/JP McGlone/AnyAPI'
+  s.homepage         = 'https://github.com/jpmcglone/AnyAPI'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'JP McGlone' => 'jp@trifl.co' }
-  s.source           = { :git => 'https://github.com/JP McGlone/AnyAPI.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
+  s.source           = { :git => 'https://github.com/jpmcglone/AnyAPI.git', :tag => s.version.to_s }
+  s.social_media_url = 'https://twitter.com/jpmcglone'
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '9.0'
 
   s.source_files = 'AnyAPI/Classes/**/*'
   
-  # s.resource_bundles = {
-  #   'AnyAPI' => ['AnyAPI/Assets/*.png']
-  # }
+#  s.resource_bundles = {
+#    'AnyAPI' => ['AnyAPI/Assets/*.png']
+#  }
 
-  # s.public_header_files = 'Pod/Classes/**/*.h'
-  # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
+#  s.public_header_files = 'Pod/Classes/**/*.h'
+  s.dependency 'Alamofire'
+  s.dependency 'ObjectMapper'
+  s.dependency 'AlamofireNetworkActivityIndicator'
+  s.dependency 'AlamofireObjectMapper'
 end
