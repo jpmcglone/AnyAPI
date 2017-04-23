@@ -10,16 +10,12 @@
 AnyAPI lets you easily interface with any HTTP JSON API.
 
 - [Installation](#installation)
+- [Requirements](#requirements)
+- [Communication](#communication)
 - [Usage](#usage)
-    - **Intro -** [Making a Request](#making-a-request), [Response Handling](#response-handling), [Response Validation](#response-validation), [Response Caching](#response-caching)
-	- **HTTP -** [HTTP Methods](#http-methods), [Parameter Encoding](#parameter-encoding), [HTTP Headers](#http-headers), [Authentication](#authentication)
-	- **Large Data -** [Downloading Data to a File](#downloading-data-to-a-file), [Uploading Data to a Server](#uploading-data-to-a-server)
-	- **Tools -** [Statistical Metrics](#statistical-metrics), [cURL Command Output](#curl-command-output)
-- [Advanced Usage](#advanced-usage)
-	- **URL Session -** [Session Manager](#session-manager), [Session Delegate](#session-delegate), [Request](#request)
-	- **Routing -** [Routing Requests](#routing-requests), [Adapting and Retrying Requests](#adapting-and-retrying-requests)
-	- **Model Objects -** [Custom Response Serialization](#custom-response-serialization)
-	- **Connection -** [Security](#security), [Network Reachability](#network-reachability)
+- [Credits](#credits)
+- [Donation](#donation)
+- [License](#license)
 
 ## Requirements
 
