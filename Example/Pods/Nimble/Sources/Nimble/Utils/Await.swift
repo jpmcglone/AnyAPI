@@ -2,7 +2,7 @@ import CoreFoundation
 import Dispatch
 import Foundation
 
-#if !_runtime(_ObjC)
+#if canImport(CDispatch)
     import CDispatch
 #endif
 
@@ -27,16 +27,12 @@ internal protocol WaitLock {
 }
 
 internal class AssertionWaitLock: WaitLock {
-    private var currentWaiter: WaitingInfo? = nil
+    private var currentWaiter: WaitingInfo?
     init() { }
 
     func acquireWaitingLock(_ fnName: String, file: FileString, line: UInt) {
         let info = WaitingInfo(name: fnName, file: file, lineNumber: line)
-        #if _runtime(_ObjC)
-            let isMainThread = Thread.isMainThread
-        #else
-            let isMainThread = _CFIsMainThread()
-        #endif
+        let isMainThread = Thread.isMainThread
         nimblePrecondition(
             isMainThread,
             "InvalidNimbleAPIUsage",
@@ -45,10 +41,15 @@ internal class AssertionWaitLock: WaitLock {
         nimblePrecondition(
             currentWaiter == nil,
             "InvalidNimbleAPIUsage",
-            "Nested async expectations are not allowed to avoid creating flaky tests.\n\n" +
-            "The call to\n\t\(info)\n" +
-            "triggered this exception because\n\t\(currentWaiter!)\n" +
-            "is currently managing the main run loop."
+            """
+            Nested async expectations are not allowed to avoid creating flaky tests.
+
+            The call to
+            \t\(info)
+            triggered this exception because
+            \t\(currentWaiter!)
+            is currently managing the main run loop.
+            """
         )
         currentWaiter = info
     }
@@ -89,7 +90,7 @@ internal enum AwaitResult<T> {
 
     func isCompleted() -> Bool {
         switch self {
-        case .completed(_): return true
+        case .completed: return true
         default: return false
         }
     }
@@ -105,11 +106,15 @@ internal class AwaitPromise<T> {
         signal = DispatchSemaphore(value: 1)
     }
 
+    deinit {
+        signal.signal()
+    }
+
     /// Resolves the promise with the given result if it has not been resolved. Repeated calls to
     /// this method will resolve in a no-op.
     ///
     /// @returns a Bool that indicates if the async result was accepted or rejected because another
-    ///          value was recieved first.
+    ///          value was received first.
     func resolveResult(_ result: AwaitResult<T>) -> Bool {
         if signal.wait(timeout: .now()) == .success {
             self.asyncResult = result
@@ -176,16 +181,18 @@ internal class AwaitPromiseBuilder<T> {
         // checked.
         //
         // In addition, stopping the run loop is used to halt code executed on the main run loop.
-        trigger.timeoutSource.scheduleOneshot(
+        trigger.timeoutSource.schedule(
             deadline: DispatchTime.now() + timeoutInterval,
-            leeway: timeoutLeeway)
-        trigger.timeoutSource.setEventHandler() {
+            repeating: .never,
+            leeway: timeoutLeeway
+        )
+        trigger.timeoutSource.setEventHandler {
             guard self.promise.asyncResult.isIncomplete() else { return }
             let timedOutSem = DispatchSemaphore(value: 0)
             let semTimedOutOrBlocked = DispatchSemaphore(value: 0)
             semTimedOutOrBlocked.signal()
             let runLoop = CFRunLoopGetMain()
-            #if _runtime(_ObjC)
+            #if canImport(Darwin)
                 let runLoopMode = CFRunLoopMode.defaultMode.rawValue
             #else
                 let runLoopMode = kCFRunLoopDefaultMode
@@ -218,7 +225,7 @@ internal class AwaitPromiseBuilder<T> {
     /// @discussion
     /// This function must be executed on the main thread and cannot be nested. This is because
     /// this function (and it's related methods) coordinate through the main run loop. Tampering
-    /// with the run loop can cause undesireable behavior.
+    /// with the run loop can cause undesirable behavior.
     ///
     /// This method will return an AwaitResult in the following cases:
     ///
@@ -250,9 +257,13 @@ internal class AwaitPromiseBuilder<T> {
             self.trigger.timeoutSource.resume()
             while self.promise.asyncResult.isIncomplete() {
                 // Stopping the run loop does not work unless we run only 1 mode
+                #if (swift(>=4.2) && canImport(Darwin)) || compiler(>=5.0)
+                _ = RunLoop.current.run(mode: .default, before: .distantFuture)
+                #else
                 _ = RunLoop.current.run(mode: .defaultRunLoopMode, before: .distantFuture)
+                #endif
             }
-            self.trigger.timeoutSource.suspend()
+
             self.trigger.timeoutSource.cancel()
             if let asyncSource = self.trigger.actionSource {
                 asyncSource.cancel()
@@ -282,20 +293,23 @@ internal class Awaiter {
     }
 
     func performBlock<T>(
-        _ closure: @escaping (@escaping (T) -> Void) throws -> Void) -> AwaitPromiseBuilder<T> {
+        file: FileString,
+        line: UInt,
+        _ closure: @escaping (@escaping (T) -> Void) throws -> Void
+        ) -> AwaitPromiseBuilder<T> {
             let promise = AwaitPromise<T>()
             let timeoutSource = createTimerSource(timeoutQueue)
             var completionCount = 0
             let trigger = AwaitTrigger(timeoutSource: timeoutSource, actionSource: nil) {
-                try closure() {
+                try closure {
                     completionCount += 1
-                    nimblePrecondition(
-                        completionCount < 2,
-                        "InvalidNimbleAPIUsage",
-                        "Done closure's was called multiple times. waitUntil(..) expects its " +
-                        "completion closure to only be called once.")
-                    if promise.resolveResult(.completed($0)) {
-                        CFRunLoopStop(CFRunLoopGetMain())
+                    if completionCount < 2 {
+                        if promise.resolveResult(.completed($0)) {
+                            CFRunLoopStop(CFRunLoopGetMain())
+                        }
+                    } else {
+                        fail("waitUntil(..) expects its completion closure to be only called once",
+                             file: file, line: line)
                     }
                 }
             }
@@ -313,8 +327,8 @@ internal class Awaiter {
         let asyncSource = createTimerSource(asyncQueue)
         let trigger = AwaitTrigger(timeoutSource: timeoutSource, actionSource: asyncSource) {
             let interval = DispatchTimeInterval.nanoseconds(Int(pollInterval * TimeInterval(NSEC_PER_SEC)))
-            asyncSource.scheduleRepeating(deadline: .now(), interval: interval, leeway: pollLeeway)
-            asyncSource.setEventHandler() {
+            asyncSource.schedule(deadline: .now(), repeating: interval, leeway: pollLeeway)
+            asyncSource.setEventHandler {
                 do {
                     if let result = try closure() {
                         if promise.resolveResult(.completed(result)) {
@@ -347,14 +361,10 @@ internal func pollBlock(
     expression: @escaping () throws -> Bool) -> AwaitResult<Bool> {
         let awaiter = NimbleEnvironment.activeInstance.awaiter
         let result = awaiter.poll(pollInterval) { () throws -> Bool? in
-            do {
-                if try expression() {
-                    return true
-                }
-                return nil
-            } catch let error {
-                throw error
+            if try expression() {
+                return true
             }
+            return nil
         }.timeout(timeoutInterval, forcefullyAbortTimeout: timeoutInterval / 2.0).wait(fnName, file: file, line: line)
 
         return result

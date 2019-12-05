@@ -1,9 +1,14 @@
+#ifdef __APPLE__
+#import "TargetConditionals.h"
+#if TARGET_OS_OSX || TARGET_OS_IOS
+
 #ifndef	_mach_exc_server_
 #define	_mach_exc_server_
 
 /* Module mach_exc */
 
 #include <string.h>
+
 #include <mach/ndr.h>
 #include <mach/boolean.h>
 #include <mach/kern_return.h>
@@ -36,6 +41,29 @@ extern "C" {
 #endif // !KERNEL
 	
 /* END VOUCHER CODE */
+
+	
+/* BEGIN MIG_STRNCPY_ZEROFILL CODE */
+
+#if defined(__has_include)
+#if __has_include(<mach/mig_strncpy_zerofill_support.h>)
+#ifndef USING_MIG_STRNCPY_ZEROFILL
+#define USING_MIG_STRNCPY_ZEROFILL
+#endif
+#ifndef __MIG_STRNCPY_ZEROFILL_FORWARD_TYPE_DECLS__
+#define __MIG_STRNCPY_ZEROFILL_FORWARD_TYPE_DECLS__
+#ifdef __cplusplus
+extern "C" {
+#endif
+	extern int mig_strncpy_zerofill(char *dest, const char *src, int len) __attribute__((weak_import));
+#ifdef __cplusplus
+}
+#endif
+#endif /* __MIG_STRNCPY_ZEROFILL_FORWARD_TYPE_DECLS__ */
+#endif /* __has_include(<mach/mig_strncpy_zerofill_support.h>) */
+#endif /* __has_include */
+	
+/* END MIG_STRNCPY_ZEROFILL CODE */
 
 
 #ifdef AUTOTEST
@@ -296,3 +324,6 @@ __AfterMigServerHeader
 #endif /* __AfterMigServerHeader */
 
 #endif	 /* _mach_exc_server_ */
+
+#endif /* TARGET_OS_OSX || TARGET_OS_IOS */
+#endif /* __APPLE__ */

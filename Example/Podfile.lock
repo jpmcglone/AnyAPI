@@ -10,14 +10,14 @@ PODS:
     - AlamofireNetworkActivityIndicator
     - AlamofireObjectMapper
     - ObjectMapper
-  - Nimble (5.1.1)
+  - Nimble (8.0.4)
   - ObjectMapper (3.5.1)
-  - Quick (1.0.0)
+  - Quick (2.2.0)
 
 DEPENDENCIES:
   - AnyAPI (from `../`)
-  - Nimble (~> 5.1.1)
-  - Quick (~> 1.0.0)
+  - Nimble
+  - Quick
 
 SPEC REPOS:
   trunk:
@@ -37,10 +37,10 @@ SPEC CHECKSUMS:
   AlamofireNetworkActivityIndicator: 9acc3de3ca6645bf0efed462396b0df13dd3e7b8
   AlamofireObjectMapper: 1989f690e982b71921b9253f53a4f33a9bc00d88
   AnyAPI: 5379b6f2a20d5f96598112045b2e514c5b4fad14
-  Nimble: 415e3aa3267e7bc2c96b05fa814ddea7bb686a29
+  Nimble: 18d5360282923225d62b09d781f63abc1a0111fc
   ObjectMapper: 70187b8941977c62ccfb423caf6b50be405cabf0
-  Quick: 8024e4a47e6cc03a9d5245ef0948264fc6d27cff
+  Quick: 7fb19e13be07b5dfb3b90d4f9824c855a11af40e
 
-PODFILE CHECKSUM: 1da1fa60cdf69370e5e43cca3b100e07bf783541
+PODFILE CHECKSUM: d07b7abc8c22a55807ba1d5e4d8fd7113974a7ad
 
 COCOAPODS: 1.8.4
