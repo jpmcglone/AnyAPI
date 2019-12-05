@@ -22,7 +22,7 @@ DEPENDENCIES:
   - SwiftLint
 
 SPEC REPOS:
-  trunk:
+  https://github.com/CocoaPods/Specs.git:
     - Alamofire
     - AlamofireNetworkActivityIndicator
     - AlamofireObjectMapper
@@ -45,6 +45,6 @@ SPEC CHECKSUMS:
   Quick: 7fb19e13be07b5dfb3b90d4f9824c855a11af40e
   SwiftLint: 4105f061f9812b214568b736dab580ab2c73a582
 
-PODFILE CHECKSUM: 85207c1ed5f73cab8ba3348298fb587c23b5c1d2
+PODFILE CHECKSUM: 15c383c4d8d9b14f4a87f505dddfb4c8aea29bd9
 
 COCOAPODS: 1.8.4
