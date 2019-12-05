@@ -13,11 +13,13 @@ PODS:
   - Nimble (8.0.4)
   - ObjectMapper (3.5.1)
   - Quick (2.2.0)
+  - SwiftLint (0.38.0)
 
 DEPENDENCIES:
   - AnyAPI (from `../`)
   - Nimble
   - Quick
+  - SwiftLint
 
 SPEC REPOS:
   trunk:
@@ -27,6 +29,7 @@ SPEC REPOS:
     - Nimble
     - ObjectMapper
     - Quick
+    - SwiftLint
 
 EXTERNAL SOURCES:
   AnyAPI:
@@ -40,7 +43,8 @@ SPEC CHECKSUMS:
   Nimble: 18d5360282923225d62b09d781f63abc1a0111fc
   ObjectMapper: 70187b8941977c62ccfb423caf6b50be405cabf0
   Quick: 7fb19e13be07b5dfb3b90d4f9824c855a11af40e
+  SwiftLint: 4105f061f9812b214568b736dab580ab2c73a582
 
-PODFILE CHECKSUM: d07b7abc8c22a55807ba1d5e4d8fd7113974a7ad
+PODFILE CHECKSUM: 85207c1ed5f73cab8ba3348298fb587c23b5c1d2
 
 COCOAPODS: 1.8.4

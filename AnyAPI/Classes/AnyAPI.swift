@@ -12,15 +12,15 @@ public class AnyAPI {
       NetworkActivityIndicatorManager.shared.isEnabled = activityIndicatorEnabled
     }
   }
-  
+
   public init() {
-    
+
   }
-  
+
   @discardableResult
   public func request(method: HTTPMethod = .get, uri: String, parameters: [String: Any]? = nil) -> DataRequest {
     let urlString = "\(baseURL != nil ? "\(baseURL!.absoluteString)/" : "")\(uri)"
-    
+
     // Full parameters
     var fullParameters = [String: Any]()
     if let baseParameters = baseParameters {
@@ -28,7 +28,7 @@ public class AnyAPI {
         fullParameters[key] = value
       }
     }
-    
+
     // Full baseHeaders
     var fullHeaders = [String: String]()
     if let baseHeaders = baseHeaders {
@@ -36,7 +36,14 @@ public class AnyAPI {
         fullHeaders[key] = value
       }
     }
-    
-    return Alamofire.request(urlString, method: method, parameters: fullParameters, encoding: URLEncoding.default, headers: fullHeaders)
+
+    return Alamofire.request(
+      urlString,
+      method: method,
+      parameters:
+      fullParameters,
+      encoding: URLEncoding.default,
+      headers: fullHeaders
+    )
   }
 }
