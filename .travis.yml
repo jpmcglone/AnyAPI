@@ -3,6 +3,7 @@ osx_image: xcode11.2
 language: swift
 install:
   - cd Example 
+  - gem install bundler
   - bundle install
 script:
   - bundle exec fastlane tests
