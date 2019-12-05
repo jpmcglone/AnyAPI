@@ -1,7 +1,8 @@
 os: osx
 osx_image: xcode11.2
 language: objective-c
-install
+
+install:
   - set -o pipefail
   - cd Example 
   - gem install bundler
