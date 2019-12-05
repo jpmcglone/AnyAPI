@@ -3,12 +3,11 @@ use_frameworks!
 
 target 'AnyAPI_Example' do
   pod 'AnyAPI', :path => '../'
-  pod 'FlowDK'
   
   target 'AnyAPI_Tests' do
     inherit! :search_paths
 
     pod 'Quick', '~> 1.0.0'
-  pod 'Nimble', '~> 5.1.1'
+    pod 'Nimble', '~> 5.1.1'
   end
 end
