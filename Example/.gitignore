@@ -179,10 +179,6 @@ playground.xcworkspace
 # Add this line if you want to avoid checking in Xcode SPM integration.
 # .swiftpm/xcode
 
-# Accio dependency management
-Dependencies/
-.accio/
-
 # fastlane
 # It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
 # screenshots whenever they are needed.
