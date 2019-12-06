@@ -7,6 +7,8 @@ install:
   - cd Example 
   - gem install bundler
   - bundle install
+  - bundle exec pod deintegrate
+  - bundle exec pod install
 script:
   - bundle exec fastlane tests
 
