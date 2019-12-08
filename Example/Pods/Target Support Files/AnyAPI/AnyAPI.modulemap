@@ -1,6 +1,0 @@
-framework module AnyAPI {
-  umbrella header "AnyAPI-umbrella.h"
-
-  export *
-  module * { export * }
-}

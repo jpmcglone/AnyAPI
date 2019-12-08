@@ -1,9 +1,0 @@
-default_platform(:ios)
-
-platform :ios do
-  desc "Run tests"
-  lane :tests do
-#    setup_travis
-    scan
-  end
-end

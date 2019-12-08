@@ -1,0 +1,50 @@
+PODS:
+  - Alamofire (4.9.1)
+  - AlamofireNetworkActivityIndicator (2.4.0):
+    - Alamofire (~> 4.8)
+  - AlamofireObjectMapper (5.2.1):
+    - Alamofire (~> 4.7)
+    - ObjectMapper (~> 3.4)
+  - AnyAPI (0.1.0):
+    - Alamofire
+    - AlamofireNetworkActivityIndicator
+    - AlamofireObjectMapper
+    - ObjectMapper
+  - Nimble (8.0.4)
+  - ObjectMapper (3.5.1)
+  - Quick (2.2.0)
+  - SwiftLint (0.36.0)
+
+DEPENDENCIES:
+  - AnyAPI (from `.`)
+  - Nimble
+  - Quick
+  - SwiftLint
+
+SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - Alamofire
+    - AlamofireNetworkActivityIndicator
+    - AlamofireObjectMapper
+    - Nimble
+    - ObjectMapper
+    - Quick
+    - SwiftLint
+
+EXTERNAL SOURCES:
+  AnyAPI:
+    :path: "."
+
+SPEC CHECKSUMS:
+  Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
+  AlamofireNetworkActivityIndicator: 9acc3de3ca6645bf0efed462396b0df13dd3e7b8
+  AlamofireObjectMapper: 1989f690e982b71921b9253f53a4f33a9bc00d88
+  AnyAPI: 5379b6f2a20d5f96598112045b2e514c5b4fad14
+  Nimble: 18d5360282923225d62b09d781f63abc1a0111fc
+  ObjectMapper: 70187b8941977c62ccfb423caf6b50be405cabf0
+  Quick: 7fb19e13be07b5dfb3b90d4f9824c855a11af40e
+  SwiftLint: fc9859e4e1752340664851f667bb1898b9c90114
+
+PODFILE CHECKSUM: 3426319ab0c3876d714b7bdb4e757583dd209398
+
+COCOAPODS: 1.8.4

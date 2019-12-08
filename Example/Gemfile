@@ -1,2 +1,0 @@
-gem 'cocoapods'
-gem 'fastlane'
