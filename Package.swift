@@ -15,12 +15,17 @@ let package = Package(
     ),
   ],
   dependencies: [
-    .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.6.4")
+    .package(
+      url: "https://github.com/Alamofire/Alamofire.git",
+      from: "5.10.2"
+    )
   ],
   targets: [
     .target(
       name: "AnyAPI",
-      dependencies: ["Alamofire"]
+      dependencies: [
+        .product(name: "Alamofire", package: "Alamofire")
+      ]
     ),
     .testTarget(
       name: "AnyAPITests",
