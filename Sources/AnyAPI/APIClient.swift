@@ -1,10 +1,16 @@
 import Alamofire
 import Foundation
 
-public final class APIClient {
+public final class APIClient: ObservableObject {
   public let baseURL: URL
   public let session: Session
   private let defaultHeadersProvider: () -> HTTPHeaders
+
+  @Published public private(set) var activeRequests: [URLRequest] = []
+
+  public var requestCount: Int {
+    activeRequests.count
+  }
 
   public init(
     baseURL: URL,
@@ -43,13 +49,18 @@ public final class APIClient {
       }
 
       let onRequest = options.onRequest
-      request.cURLDescription { _ in
-        if let urlRequest = request.convertible.urlRequest {
-          onRequest?(urlRequest)
-        }
+
+      if let urlRequest = request.convertible.urlRequest {
+        await self.track(urlRequest)
+        onRequest?(urlRequest)
       }
 
       let response = await request.serializingData().response
+
+      if let req = request.convertible.urlRequest {
+        await self.untrack(req)
+      }
+
       options.onResponse?(response)
 
       switch response.result {
@@ -175,7 +186,8 @@ public final class APIClient {
          case .unacceptableStatusCode(let code) = reason,
          code == 401,
          let handler = options.authFailureHandler {
-        await handler(self)
+        let weakSelf = self
+        await handler(weakSelf)
         throw RetryableError.shouldRetry
       }
 
@@ -211,6 +223,19 @@ public final class APIClient {
 
     fatalError("withRetry should never reach here.")
   }
+
+  private func track(_ request: URLRequest) async {
+    await MainActor.run {
+      self.activeRequests.append(request)
+    }
+  }
+
+  private func untrack(_ request: URLRequest) async {
+    await MainActor.run {
+      self.activeRequests.removeAll { $0 == request }
+    }
+  }
+
 }
 
 // Also make this enum public

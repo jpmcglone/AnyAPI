@@ -72,7 +72,7 @@ final class AnyAPITests: XCTestCase {
     XCTAssertNotNil(cancelable.request)
   }
 
-  func testRequestBuilderFluentAPI() {
+  @MainActor func testRequestBuilderFluentAPI() {
     let client = makeClient()
     let builder = client(DummyEndpoint(payload: "hi"))
       .additionalParameters(["extra": "param"])
@@ -139,7 +139,7 @@ final class AnyAPITests: XCTestCase {
     XCTAssertEqual(result.message, "Recovered", "Expected 'Recovered' message after retry.")
   }
 
-  func testTimeoutSetsCorrectInterval() throws {
+  @MainActor func testTimeoutSetsCorrectInterval() throws {
     let client = makeClient()
     let builder = client(DummyEndpoint(payload: "timeout"))
       .timeout(3)

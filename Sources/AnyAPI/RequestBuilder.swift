@@ -58,6 +58,7 @@ public final class RequestBuilder<E: Endpoint> {
     }
   }
 
+  @MainActor
   public func start() throws -> CancelableTask<E.Response> {
     let url = client.baseURL.appendingPathComponent(endpoint.path)
 
@@ -81,9 +82,10 @@ public final class RequestBuilder<E: Endpoint> {
       headers: finalHeaders
     )
 
+    let onRequest = options.onRequest
     request.cURLDescription { _ in
       if let urlRequest = request.convertible.urlRequest {
-        self.options.onRequest?(urlRequest)
+        onRequest?(urlRequest)
       }
     }
 

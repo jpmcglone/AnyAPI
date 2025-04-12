@@ -1,10 +1,14 @@
 import Foundation
 
-public final class WebSocketClient: NSObject, URLSessionDelegate {
+public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObject {
   private let url: URL
   private var task: URLSessionWebSocketTask?
   private var session: URLSession!
   private var eventHandler: ((WebSocketEvent) -> Void)?
+
+  @Published public private(set) var isConnected = false
+  @Published public private(set) var lastMessage: String?
+  @Published public private(set) var lastData: Data?
 
   public init(url: URL) {
     self.url = url
@@ -15,12 +19,14 @@ public final class WebSocketClient: NSObject, URLSessionDelegate {
   public func connect() {
     task = session.webSocketTask(with: url)
     task?.resume()
+    isConnected = true
     receive()
     eventHandler?(.connected)
   }
 
   public func disconnect() {
     task?.cancel(with: .goingAway, reason: nil)
+    isConnected = false
     eventHandler?(.disconnected)
   }
 
@@ -50,8 +56,14 @@ public final class WebSocketClient: NSObject, URLSessionDelegate {
       case .success(let message):
         switch message {
         case .string(let text):
+          DispatchQueue.main.async {
+            self?.lastMessage = text
+          }
           self?.eventHandler?(.message(text))
         case .data(let data):
+          DispatchQueue.main.async {
+            self?.lastData = data
+          }
           self?.eventHandler?(.data(data))
         @unknown default:
           break
@@ -59,6 +71,9 @@ public final class WebSocketClient: NSObject, URLSessionDelegate {
         self?.receive() // Continue listening
       case .failure(let error):
         self?.eventHandler?(.error(error))
+        DispatchQueue.main.async {
+          self?.isConnected = false
+        }
       }
     }
   }
