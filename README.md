@@ -8,6 +8,8 @@
 
 - 🧱 Fluent builder pattern
 - 🧪 Built-in mocking for tests (`mock`, `mockIf`)
+- 💤 Optional artificial request delay (useful for testing loading states)
+- 📊 Observable request tracking with `activeRequests` and `requestCount` for SwiftUI
 - 🔁 Retry support with fixed or exponential strategies
 - 🧼 Custom request/response interceptors
 - 🧵 Manual timeout, header, parameter overrides
@@ -42,7 +44,7 @@ let token = try await client(Login(username: "me", password: "pass"))
   .onResponse { print("⬅️", $0) }
   .decodeAs(Login.Response.self)
   .run
-
+  
 ## 🧪 Mocking in Tests
 
 ```swift
@@ -101,13 +103,36 @@ let result = try await client(MyEndpoint())
 }
 ```
 
+### ⏳ Add Delay (for testing)
+
+```swift
+.delay(1.5) // Adds 1.5 seconds before the request starts
+```
+
+### 🧼 SwiftUI Request Tracking
+
+```swift
+@StateObject var client = APIClient(...)
+Text("Active Requests: \(client.requestCount)")
+```
+
+Or access `client.activeRequests` for more detail.
+
+
 ## 📡 WebSocket (Experimental)
 
 ```swift
 let socket = WebSocketClient(url: URL(string: "wss://echo.websocket.org")!)
-socket.onText = { print("Received:", $0) }
-try await socket.connect()
-try await socket.send("Hello world")
+socket.onEvent { event in
+  switch event {
+  case .connected: print("Connected")
+  case .message(let text): print("Received:", text)
+  case .disconnected: print("Disconnected")
+  case .error(let err): print("Error:", err)
+  }
+}
+socket.connect()
+socket.send("Hello world")
 ```
 
 ## 📦 Installation
