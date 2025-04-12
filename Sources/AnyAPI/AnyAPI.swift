@@ -3,6 +3,6 @@
 
 @_exported import Alamofire
 
-enum AnyAPI {
-  static var logger = AnyAPILogger()
+public enum AnyAPI {
+  public static var logger = AnyAPILogger()
 }

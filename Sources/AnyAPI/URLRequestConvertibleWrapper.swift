@@ -1,12 +1,13 @@
 import Foundation
 
-struct URLRequestConvertibleWrapper: URLRequestConvertible {
-  let request: URLRequest
-  init(_ request: URLRequest) {
+public struct URLRequestConvertibleWrapper: URLRequestConvertible {
+  public let request: URLRequest
+
+  public init(_ request: URLRequest) {
     self.request = request
   }
 
-  func asURLRequest() throws -> URLRequest {
+  public func asURLRequest() throws -> URLRequest {
     request
   }
 }

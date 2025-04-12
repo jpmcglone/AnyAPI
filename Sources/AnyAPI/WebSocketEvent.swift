@@ -1,6 +1,6 @@
 import Foundation
 
-enum WebSocketEvent {
+public enum WebSocketEvent {
   case connected
   case disconnected
   case message(String)

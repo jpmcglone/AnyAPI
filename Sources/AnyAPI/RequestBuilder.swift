@@ -1,63 +1,64 @@
 import Foundation
+import Alamofire
 
-final class RequestBuilder<E: Endpoint> {
+public final class RequestBuilder<E: Endpoint> {
   private let endpoint: E
   private let client: APIClient
   private var options: RequestOptions
 
-  init(endpoint: E, client: APIClient, options: RequestOptions = .init()) {
+  public init(endpoint: E, client: APIClient, options: RequestOptions = .init()) {
     self.endpoint = endpoint
     self.client = client
     self.options = options
   }
 
-  func additionalParameters(_ p: Parameters) -> Self {
+  public func additionalParameters(_ p: Parameters) -> Self {
     options = options.additionalParameters(p)
     return self
   }
 
-  func additionalHeaders(_ h: HTTPHeaders) -> Self {
+  public func additionalHeaders(_ h: HTTPHeaders) -> Self {
     options = options.additionalHeaders(h)
     return self
   }
 
-  func overrideParameters(_ p: Parameters) -> Self {
+  public func overrideParameters(_ p: Parameters) -> Self {
     options = options.overrideParameters(p)
     return self
   }
 
-  func overrideHeaders(_ h: HTTPHeaders) -> Self {
+  public func overrideHeaders(_ h: HTTPHeaders) -> Self {
     options = options.overrideHeaders(h)
     return self
   }
 
-  func encoding(_ e: ParameterEncoding) -> Self {
+  public func encoding(_ e: ParameterEncoding) -> Self {
     options = options.encoding(e)
     return self
   }
 
-  func request(_ block: @escaping (URLRequest) -> Void) -> Self {
+  public func request(_ block: @escaping (URLRequest) -> Void) -> Self {
     options = options.onRequest(block)
     return self
   }
 
-  func response(_ block: @escaping (AFDataResponse<Data>) -> Void) -> Self {
+  public func response(_ block: @escaping (AFDataResponse<Data>) -> Void) -> Self {
     options = options.onResponse(block)
     return self
   }
 
-  func decodeWith(_ block: @escaping (Data) throws -> Any) -> Self {
+  public func decodeWith(_ block: @escaping (Data) throws -> Any) -> Self {
     options = options.decodeWith(block)
     return self
   }
 
-  var run: E.Response {
+  public var run: E.Response {
     get async throws {
       try await client.execute(endpoint, options: options)
     }
   }
 
-  func start() throws -> CancelableTask<E.Response> {
+  public func start() throws -> CancelableTask<E.Response> {
     let url = client.baseURL.appendingPathComponent(endpoint.path)
 
     let baseParams = try endpoint.asParameters()
@@ -109,7 +110,7 @@ final class RequestBuilder<E: Endpoint> {
     return CancelableTask(request: request, task: task)
   }
 
-  func withMultipart() -> Self {
+  public func withMultipart() -> Self {
     options = options.withMultipart { form in
       if let parameters = try? self.endpoint.asParameters() {
         for (key, value) in parameters {
@@ -122,62 +123,62 @@ final class RequestBuilder<E: Endpoint> {
     return self
   }
 
-  func withMultipart(_ builder: @escaping (MultipartFormData) -> Void) -> Self {
+  public func withMultipart(_ builder: @escaping (MultipartFormData) -> Void) -> Self {
     options = options.withMultipart(builder)
     return self
   }
 
-  func mock(with mock: MockResponse) -> Self {
+  public func mock(with mock: MockResponse) -> Self {
     options = options.mock(with: mock)
     return self
   }
 
-  func mockIf(_ condition: Bool, with factory: () -> MockResponse) -> Self {
+  public func mockIf(_ condition: Bool, with factory: () -> MockResponse) -> Self {
     options = options.mockIf(condition, with: factory)
     return self
   }
 
-  func retry(max: Int, strategy: RetryPolicy.Strategy = .immediate) -> Self {
+  public func retry(max: Int, strategy: RetryPolicy.Strategy = .immediate) -> Self {
     options = options.retry(max: max, strategy: strategy)
     return self
   }
 
-  func timeout(_ seconds: TimeInterval) -> Self {
+  public func timeout(_ seconds: TimeInterval) -> Self {
     options = options.timeout(seconds)
     return self
   }
 
-  func intercept(_ block: @escaping (inout URLRequest) -> Void) -> Self {
+  public func intercept(_ block: @escaping (inout URLRequest) -> Void) -> Self {
     options = options.intercept(block)
     return self
   }
 
-  func interceptResponse(_ block: @escaping (Data, HTTPURLResponse) throws -> Data) -> Self {
+  public func interceptResponse(_ block: @escaping (Data, HTTPURLResponse) throws -> Data) -> Self {
     options = options.interceptResponse(block)
     return self
   }
 
-  func onAuthFailure(_ handler: @escaping (APIClient) async -> Void) -> Self {
+  public func onAuthFailure(_ handler: @escaping (APIClient) async -> Void) -> Self {
     options = options.onAuthFailure(handler)
     return self
   }
 
-  func onError(_ handler: @escaping (Error) -> Void) -> Self {
+  public func onError(_ handler: @escaping (Error) -> Void) -> Self {
     options = options.onError(handler)
     return self
   }
 
-  func onProgress(_ handler: @escaping @Sendable (Progress) -> Void) -> Self {
+  public func onProgress(_ handler: @escaping @Sendable (Progress) -> Void) -> Self {
     options = options.onProgress(handler)
     return self
   }
 
-  func decodeAs<T: Decodable>(_ type: T.Type) -> Self {
+  public func decodeAs<T: Decodable>(_ type: T.Type) -> Self {
     options = options.decodeAs(type)
     return self
   }
 
-  func decodeAs<T: Decodable>(_ type: T.Type, using decoder: JSONDecoder) -> Self {
+  public func decodeAs<T: Decodable>(_ type: T.Type, using decoder: JSONDecoder) -> Self {
     options = options.decodeAs(type, using: decoder)
     return self
   }

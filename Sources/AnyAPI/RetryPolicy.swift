@@ -15,10 +15,12 @@ public struct RetryPolicy {
     self.strategy = strategy
   }
 
-  func delay(for attempt: Int) -> TimeInterval {
+  public func delay(for attempt: Int) -> TimeInterval {
     switch strategy {
-    case .immediate: return 0
-    case .fixed(let seconds): return seconds
+    case .immediate:
+      return 0
+    case .fixed(let seconds):
+      return seconds
     case .exponential(let initial, let multiplier, let max):
       let computed = initial * pow(multiplier, Double(attempt - 1))
       return min(computed, max ?? computed)
