@@ -83,9 +83,11 @@ final class APIClient {
         request.uploadProgress(closure: onProgress)
       }
 
+      let onRequest = options.onRequest
+
       request.cURLDescription { _ in
         if let urlRequest = request.convertible.urlRequest {
-          options.onRequest?(urlRequest)
+          onRequest?(urlRequest)
         }
       }
 
