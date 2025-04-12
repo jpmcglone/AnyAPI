@@ -21,7 +21,7 @@ public struct RequestOptions {
   public var responseInterceptor: ((Data, HTTPURLResponse) throws -> Data)? = nil
   public var onErrorHandler: ((Error) -> Void)? = nil
   public var onProgress: (@Sendable (Progress) -> Void)? = nil
-  public var requestDelay: TimeInterval? = nil // 👈 Add this
+  public var requestDelay: TimeInterval? = nil
 
   public init() {}
 

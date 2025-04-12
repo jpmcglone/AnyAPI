@@ -184,4 +184,9 @@ public final class RequestBuilder<E: Endpoint> {
     options = options.decodeAs(type, using: decoder)
     return self
   }
+
+  public func delay(_ seconds: TimeInterval) -> Self {
+    options = options.delay(seconds)
+    return self
+  }
 }
