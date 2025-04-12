@@ -31,10 +31,8 @@ public final class APIClient: ObservableObject {
   }
 
   public func execute<E: Endpoint>(_ endpoint: E, options: RequestOptions) async throws -> E.Response {
-    if let delay = options.requestDelay, delay > 0 {
-      try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-    }
-    
+    var dummyRequest: URLRequest?
+
     if let mocked = try await handleMock(for: endpoint, with: options) {
       if let progressHandler = options.onProgress {
         let progress = Progress(totalUnitCount: 100)
@@ -44,7 +42,17 @@ public final class APIClient: ObservableObject {
       return mocked
     }
 
-    return try await withRetry(policy: options.retryPolicy) { attempt in
+    // ⬇️ Delay logic comes AFTER mock is handled
+    if let delay = options.requestDelay, delay > 0 {
+      let url = baseURL.appendingPathComponent(endpoint.path)
+      var req = URLRequest(url: url)
+      req.httpMethod = endpoint.method.rawValue
+      dummyRequest = req
+      await self.track(req)
+      try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+    }
+
+    do {
       let request = try self.buildRequest(for: endpoint, with: options)
 
       if let onProgress = options.onProgress {
@@ -55,14 +63,18 @@ public final class APIClient: ObservableObject {
       let onRequest = options.onRequest
 
       if let urlRequest = request.convertible.urlRequest {
-        await self.track(urlRequest)
+        if dummyRequest == nil {
+          await self.track(urlRequest)
+        }
         onRequest?(urlRequest)
       }
 
       let response = await request.serializingData().response
 
-      if let req = request.convertible.urlRequest {
-        await self.untrack(req)
+      if let urlRequest = request.convertible.urlRequest {
+        await self.untrack(urlRequest)
+      } else if let dummy = dummyRequest {
+        await self.untrack(dummy)
       }
 
       options.onResponse?(response)

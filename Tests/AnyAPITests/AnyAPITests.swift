@@ -157,9 +157,8 @@ final class AnyAPITests: XCTestCase {
     let client = makeClient()
     let expectation = XCTestExpectation(description: "Interceptor called")
 
-    let _ = try await client(DummyEndpoint(payload: "intercept"))
-      .intercept { req in
-        req.setValue("test-intercept", forHTTPHeaderField: "X-Intercept")
+    _ = try await client(DummyEndpoint(payload: "intercept"))
+      .intercept { _ in
         expectation.fulfill()
       }
       .mock(with: .success(#"{"message":"intercepted"}"#.data(using: .utf8)!))
@@ -171,15 +170,31 @@ final class AnyAPITests: XCTestCase {
   func testProgressHandlerFires() async throws {
     let client = makeClient()
     let progressExpectation = expectation(description: "Progress handler called")
+    let flag = Flag()
 
-    let result = try await client(DummyEndpoint(payload: "progress"))
+    let builder = client(DummyEndpoint(payload: "progress"))
       .onProgress { _ in
-        progressExpectation.fulfill()
+        Task {
+          if await flag.checkAndSet() {
+            progressExpectation.fulfill()
+          }
+        }
       }
       .mock(with: .success(#"{"message":"ok"}"#.data(using: .utf8)!))
-      .run
+
+    async let result = builder.run
 
     await fulfillment(of: [progressExpectation], timeout: 1)
-    XCTAssertEqual(result.message, "ok")
+    let decoded = try await result
+    XCTAssertEqual(decoded.message, "ok")
+  }
+}
+
+actor Flag {
+  private var value = false
+  func checkAndSet() -> Bool {
+    if value { return false }
+    value = true
+    return true
   }
 }
