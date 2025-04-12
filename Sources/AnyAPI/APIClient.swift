@@ -31,6 +31,10 @@ public final class APIClient: ObservableObject {
   }
 
   public func execute<E: Endpoint>(_ endpoint: E, options: RequestOptions) async throws -> E.Response {
+    if let delay = options.requestDelay, delay > 0 {
+      try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+    }
+    
     if let mocked = try await handleMock(for: endpoint, with: options) {
       if let progressHandler = options.onProgress {
         let progress = Progress(totalUnitCount: 100)

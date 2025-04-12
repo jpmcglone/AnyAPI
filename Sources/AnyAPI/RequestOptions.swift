@@ -21,6 +21,7 @@ public struct RequestOptions {
   public var responseInterceptor: ((Data, HTTPURLResponse) throws -> Data)? = nil
   public var onErrorHandler: ((Error) -> Void)? = nil
   public var onProgress: (@Sendable (Progress) -> Void)? = nil
+  public var requestDelay: TimeInterval? = nil // 👈 Add this
 
   public init() {}
 
@@ -140,6 +141,12 @@ public struct RequestOptions {
   public func onProgress(_ handler: @escaping @Sendable (Progress) -> Void) -> Self {
     var copy = self
     copy.onProgress = handler
+    return copy
+  }
+
+  public func delay(_ seconds: TimeInterval) -> Self {
+    var copy = self
+    copy.requestDelay = seconds
     return copy
   }
 }
