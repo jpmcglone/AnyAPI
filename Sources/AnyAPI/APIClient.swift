@@ -6,7 +6,7 @@ public final class APIClient: ObservableObject {
   public let session: Session
   private let defaultHeadersProvider: () -> HTTPHeaders
 
-  @Published public private(set) var activeRequests: [URLRequest] = []
+  @Published public private(set) var activeRequests: [TrackedRequest] = []
 
   public var requestCount: Int {
     activeRequests.count
@@ -31,8 +31,6 @@ public final class APIClient: ObservableObject {
   }
 
   public func execute<E: Endpoint>(_ endpoint: E, options: RequestOptions) async throws -> E.Response {
-    var dummyRequest: URLRequest?
-
     if let mocked = try await handleMock(for: endpoint, with: options) {
       if let progressHandler = options.onProgress {
         let progress = Progress(totalUnitCount: 100)
@@ -42,13 +40,15 @@ public final class APIClient: ObservableObject {
       return mocked
     }
 
-    // ⬇️ Delay logic comes AFTER mock is handled
+    var tracked: TrackedRequest?
+
+    // When tracking for a delay
     if let delay = options.requestDelay, delay > 0 {
-      let url = baseURL.appendingPathComponent(endpoint.path)
-      var req = URLRequest(url: url)
+      // Create a unique dummy request for delay tracking
+      var req = URLRequest(url: baseURL.appendingPathComponent(endpoint.path))
       req.httpMethod = endpoint.method.rawValue
-      dummyRequest = req
-      await self.track(req)
+      req.addValue(UUID().uuidString, forHTTPHeaderField: "X-Request-ID") // ← ensures uniqueness
+      tracked = await self.track(req)
       try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
     }
 
@@ -63,18 +63,16 @@ public final class APIClient: ObservableObject {
       let onRequest = options.onRequest
 
       if let urlRequest = request.convertible.urlRequest {
-        if dummyRequest == nil {
-          await self.track(urlRequest)
+        if tracked == nil {
+          tracked = await self.track(urlRequest)
         }
         onRequest?(urlRequest)
       }
 
       let response = await request.serializingData().response
 
-      if let urlRequest = request.convertible.urlRequest {
-        await self.untrack(urlRequest)
-      } else if let dummy = dummyRequest {
-        await self.untrack(dummy)
+      if let tracked = tracked {
+        await self.untrack(tracked)
       }
 
       options.onResponse?(response)
@@ -240,21 +238,30 @@ public final class APIClient: ObservableObject {
     fatalError("withRetry should never reach here.")
   }
 
-  private func track(_ request: URLRequest) async {
+  private func track(_ request: URLRequest) async -> TrackedRequest {
+    let tracked = TrackedRequest(request: request)
     await MainActor.run {
-      self.activeRequests.append(request)
+      self.activeRequests.append(tracked)
     }
+    return tracked
   }
 
-  private func untrack(_ request: URLRequest) async {
+  private func untrack(_ tracked: TrackedRequest) async {
     await MainActor.run {
-      self.activeRequests.removeAll { $0 == request }
+      self.activeRequests.removeAll { $0.id == tracked.id }
     }
   }
-
 }
 
-// Also make this enum public
 public enum RetryableError: Error {
   case shouldRetry
+}
+
+public struct TrackedRequest: Identifiable, Equatable {
+  public let id = UUID()
+  public let request: URLRequest
+
+  public static func == (lhs: TrackedRequest, rhs: TrackedRequest) -> Bool {
+    lhs.id == rhs.id
+  }
 }
