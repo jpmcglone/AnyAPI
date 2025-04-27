@@ -4,7 +4,7 @@ import Foundation
 public final class APIClient: ObservableObject {
   public let baseURL: URL
   public let session: Session
-  private let defaultHeadersProvider: () -> HTTPHeaders
+  private var defaultHeadersProvider: () -> HTTPHeaders
 
   @Published public private(set) var activeRequests: [TrackedRequest] = []
 
@@ -24,6 +24,10 @@ public final class APIClient: ObservableObject {
 
   public var defaultHeaders: HTTPHeaders {
     defaultHeadersProvider()
+  }
+
+  public func setDefaultHeaders(_ provider: @escaping () -> HTTPHeaders) {
+    defaultHeadersProvider = provider
   }
 
   public func callAsFunction<E: Endpoint>(_ endpoint: E) -> RequestBuilder<E> {
@@ -71,6 +75,22 @@ public final class APIClient: ObservableObject {
 
       let response = await request.serializingData().response
 
+      // 🛠 Add this debug block:
+      if let httpResponse = response.response {
+        print("🌐 HTTP Status Code:", httpResponse.statusCode)
+      }
+      switch response.result {
+      case .success(let data):
+        print("📦 Raw Response Data Size:", data.count, "bytes")
+        if let string = String(data: data, encoding: .utf8) {
+          print("📜 Raw Response Body:", string)
+        } else {
+          print("📜 Raw Response Body: (non-UTF8 or empty)")
+        }
+      case .failure(let error):
+        print("❌ Request failed:", error)
+      }
+
       if let tracked = tracked {
         await self.untrack(tracked)
       }
@@ -84,8 +104,8 @@ public final class APIClient: ObservableObject {
           data = try interceptor(data, httpResponse)
         }
 
-        let decoded: Any = try options.decoder?(data) ?? endpoint.decode(data)
-        return decoded as! E.Response
+        let decoded = try decode(endpoint, options: options, data: data)
+        return decoded
 
       case .failure(let error):
         if let status = response.response?.statusCode, status == 401,
@@ -99,7 +119,7 @@ public final class APIClient: ObservableObject {
       }
     }
   }
-
+  
   public func batch<A: Endpoint, B: Endpoint>(_ a: A, _ b: B) async throws -> (A.Response, B.Response) {
     async let ra = execute(a, options: RequestOptions())
     async let rb = execute(b, options: RequestOptions())
@@ -187,8 +207,8 @@ public final class APIClient: ObservableObject {
       if delay > 0 {
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
       }
-      let decoded: Any = try options.decoder?(data) ?? endpoint.decode(data)
-      return decoded as? E.Response
+      let decoded = try decode(endpoint, options: options, data: data)
+      return decoded
 
     case .failure(let error, let delay):
       if delay > 0 {

@@ -102,8 +102,8 @@ public final class RequestBuilder<E: Endpoint> {
           data = try interceptor(data, httpResponse)
         }
 
-        let decoded: Any = try options.decoder?(data) ?? endpoint.decode(data)
-        return decoded as! E.Response
+        let decoded = try decode(endpoint, options: options, data: data)
+        return decoded
       case .failure(let error):
         throw error
       }

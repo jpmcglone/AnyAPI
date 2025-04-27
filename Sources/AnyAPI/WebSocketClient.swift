@@ -1,7 +1,7 @@
 import Foundation
 
 @inline(__always)
-private func onMain(_ body: @escaping () -> Void) {
+public func onMain(_ body: @escaping () -> Void) {
   if Thread.isMainThread { body() }
   else { DispatchQueue.main.async(execute: body) }
 }
