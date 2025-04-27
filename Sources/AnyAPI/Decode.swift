@@ -28,8 +28,23 @@ func decode<E: Endpoint>(
   }
 }
 
-enum AnyAPIError: Error {
+enum AnyAPIError: LocalizedError {
+  case unauthorized
   case decoding(Error)
+  case server(String)          // generic
+  case custom(String)          // user-supplied
+
+  public var errorDescription: String? {
+    switch self {
+    case .unauthorized:
+      return "You must be signed in to perform this action."
+    case .server(let msg),
+        .custom(let msg):
+      return msg
+    case .decoding(let error):
+      return "Failed to decode: \(error)"
+    }
+  }
 }
 
 private func pretty(description error: DecodingError, in data: Data) -> String {

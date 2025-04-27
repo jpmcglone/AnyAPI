@@ -104,6 +104,19 @@ public final class APIClient: ObservableObject {
           data = try interceptor(data, httpResponse)
         }
 
+        // 🆕 1️⃣ 401 → readable message
+        if response.response?.statusCode == 401 {
+          throw AnyAPIError.unauthorized
+        }
+
+        // 🆕 2️⃣ other 4xx / 5xx → echo body text if present
+        if let status = response.response?.statusCode,
+           (400..<600).contains(status),
+           !data.isEmpty,
+           let body = String(data: data, encoding: .utf8) {
+          throw AnyAPIError.server(body)
+        }
+
         let decoded = try decode(endpoint, options: options, data: data)
         return decoded
 
