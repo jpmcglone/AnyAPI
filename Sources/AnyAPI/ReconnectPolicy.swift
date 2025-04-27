@@ -1,20 +1,22 @@
 import Foundation
 
 struct ReconnectPolicy {
-  var retryCount = 0
-  var maxRetryCount: Int
-  var reconnectDelay: TimeInterval
+  private(set) var retryCount = 0
+  let maxRetryCount: Int
+  private(set) var reconnectDelay: TimeInterval
+  let initialDelay: TimeInterval
   let maxReconnectDelay: TimeInterval
 
   init(maxRetryCount: Int = 5, initialDelay: TimeInterval = 2, maxDelay: TimeInterval = 60) {
     self.maxRetryCount = maxRetryCount
+    self.initialDelay = initialDelay
     self.reconnectDelay = initialDelay
     self.maxReconnectDelay = maxDelay
   }
 
   mutating func reset() {
     retryCount = 0
-    reconnectDelay = 2
+    reconnectDelay = initialDelay
   }
 
   mutating func backoff() {
