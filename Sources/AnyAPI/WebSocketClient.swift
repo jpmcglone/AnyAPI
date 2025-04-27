@@ -78,6 +78,8 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
 
   @Published public private(set) var lastMessage: String?
   @Published public private(set) var lastData: Data?
+  @Published public private(set) var lastSentMessage: String?
+  @Published public private(set) var lastSentData: Data?
 
   public init(url: URL) {
     self.url = url
@@ -105,19 +107,24 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
     task?.send(.string(text)) { [weak self] error in
       if let error = error {
         self?.eventHandler?(.error(error))
+      } else {
+        DispatchQueue.main.async {
+          self?.lastSentMessage = text
+        }
       }
     }
   }
 
-  public func waitUntilConnected(timeout: TimeInterval = 10) async throws {
-    let start = Date()
-    while Date().timeIntervalSince(start) < timeout {
-      if isConnected {
-        return
+  public func send(data: Data) {
+    task?.send(.data(data)) { [weak self] error in
+      if let error = error {
+        self?.eventHandler?(.error(error))
+      } else {
+        DispatchQueue.main.async {
+          self?.lastSentData = data
+        }
       }
-      try await Task.sleep(nanoseconds: 100_000_000) // 100ms
     }
-    throw WebSocketError.gaveUp
   }
 
   public func send<T: Encodable>(_ object: T) {
@@ -133,12 +140,15 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
     }
   }
 
-  public func send(data: Data) {
-    task?.send(.data(data)) { [weak self] error in
-      if let error = error {
-        self?.eventHandler?(.error(error))
+  public func waitUntilConnected(timeout: TimeInterval = 10) async throws {
+    let start = Date()
+    while Date().timeIntervalSince(start) < timeout {
+      if isConnected {
+        return
       }
+      try await Task.sleep(nanoseconds: 100_000_000) // 100ms
     }
+    throw WebSocketError.gaveUp
   }
 
   public func onEvent(_ handler: @escaping (WebSocketEvent) -> Void) {

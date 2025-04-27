@@ -44,7 +44,10 @@ let token = try await client(Login(username: "me", password: "pass"))
   .onResponse { print("⬅️", $0) }
   .decodeAs(Login.Response.self)
   .run
-  
+```
+
+---
+
 ## 🧪 Mocking in Tests
 
 ```swift
@@ -73,6 +76,8 @@ let result = try await client(MyEndpoint())
   .decodeAs(MyEndpoint.Response.self)
   .run
 ```
+
+---
 
 ## 🧩 Extensions
 
@@ -109,7 +114,9 @@ let result = try await client(MyEndpoint())
 .delay(1.5) // Adds 1.5 seconds before the request starts
 ```
 
-### 🧼 SwiftUI Request Tracking
+---
+
+## 🧼 SwiftUI Request Tracking
 
 ```swift
 @StateObject var client = APIClient(...)
@@ -118,6 +125,7 @@ Text("Active Requests: \(client.requestCount)")
 
 Or access `client.activeRequests` for more detail.
 
+---
 
 ## 📡 WebSocket (Experimental)
 
@@ -135,6 +143,13 @@ socket.connect()
 socket.send("Hello world")
 ```
 
+**New WebSocketClient Features:**
+- Tracks `lastMessage`, `lastData`, **plus** `lastSentMessage` and `lastSentData`.
+- Supports `waitUntilConnected(timeout:)` and `waitUntilPingSuccess(timeout:)`.
+- Built-in reconnect strategy with exponential backoff.
+
+---
+
 ## 📦 Installation
 
 In Xcode:
@@ -149,14 +164,20 @@ Then paste the URL:
 https://github.com/your-org/AnyAPI.git
 ```
 
+---
+
 ## 🧪 Run Tests
 
 ```bash
 swift test
 ```
 
+---
+
 ## 📄 License
 
 MIT License. See LICENSE file.
 
-Happy shipping 🚀
+---
+
+🚀 **Happy shipping!**
