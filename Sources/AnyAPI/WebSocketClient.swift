@@ -235,6 +235,7 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
   }
 
   public func send(_ text: String) {
+    logSend(text)  // 🆕
     task?.send(.string(text)) { [weak self] error in
       guard let self = self else { return }
       if let error = error {
@@ -275,6 +276,34 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
     }
   }
 
+  private func logSend(_ message: String) {
+    print("""
+    ========== [WebSocket SEND] ==========
+    ➡️ Sent Message:
+    \(message)
+    ========== [End SEND] ==========
+    """)
+  }
+
+  private func logReceive(_ message: String) {
+    print("""
+    ========== [WebSocket RECEIVE] ==========
+    ⬅️ Received Message:
+    \(message)
+    ========== [End RECEIVE] ==========
+    """)
+  }
+
+  private func logReceiveData(_ data: Data) {
+    let snippet = String(data: data.prefix(500), encoding: .utf8) ?? "Non-UTF8 Data (\(data.count) bytes)"
+    print("""
+    ========== [WebSocket RECEIVE DATA] ==========
+    ⬅️ Received Data (\(data.count) bytes):
+    \(snippet)
+    ========== [End RECEIVE DATA] ==========
+    """)
+  }
+
   private func receive() {
     Logger.log("Waiting to receive WebSocket message...", level: .event, category: "WebSocket")
     task?.receive { [weak self] result in
@@ -295,11 +324,11 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
   private func handleIncoming(_ message: URLSessionWebSocketTask.Message) {
     switch message {
     case .string(let text):
+      logReceive(text)  // 🆕
       if shouldIgnoreMessage(text) {
         Logger.log("Ignored message due to type in ignore list.", level: .info, category: "WebSocket")
-        // keep waiting for another message, but stop the current timeout
         cancelWaitingForFirstMessage()
-        startWaitingForFirstMessage(timeout: 5)   // restart a fresh timer
+        startWaitingForFirstMessage(timeout: 5)
         return
       }
 
@@ -308,6 +337,7 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
       handleEvent(.message(text))
 
     case .data(let data):
+      logReceiveData(data)  // 🆕
       Logger.log("Received valid binary data.", level: .success, category: "WebSocket")
       DispatchQueue.main.async { self.lastData = data }
       handleEvent(.data(data))
@@ -317,7 +347,6 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
       return
     }
 
-    // we got a real, promotable message ⇒ stop timeout & promote
     cancelWaitingForFirstMessage()
     promoteConnectionIfNeeded()
   }

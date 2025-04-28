@@ -73,7 +73,9 @@ public final class APIClient: ObservableObject {
         onRequest?(urlRequest)
       }
 
+      let startTime = Date()
       let response = await request.serializingData().response
+      debugPrintResponse(response, startTime: startTime)
 
       // 🛠 Add this debug block:
       if let httpResponse = response.response {
@@ -104,12 +106,7 @@ public final class APIClient: ObservableObject {
           data = try interceptor(data, httpResponse)
         }
 
-        // 🆕 1️⃣ 401 → readable message
-        if response.response?.statusCode == 401 {
-          throw AnyAPIError.unauthorized
-        }
-
-        // 🆕 2️⃣ other 4xx / 5xx → echo body text if present
+        // 🆕 FIRST → check if 4xx/5xx and surface error immediately
         if let status = response.response?.statusCode,
            (400..<600).contains(status),
            !data.isEmpty,
@@ -117,6 +114,12 @@ public final class APIClient: ObservableObject {
           throw AnyAPIError.server(body)
         }
 
+        // 🆕 THEN check specifically 401
+        if response.response?.statusCode == 401 {
+          throw AnyAPIError.unauthorized
+        }
+
+        // 🧹 Finally decode only if status is OK
         let decoded = try decode(endpoint, options: options, data: data)
         return decoded
 
@@ -271,6 +274,55 @@ public final class APIClient: ObservableObject {
     fatalError("withRetry should never reach here.")
   }
 
+  private func debugPrintResponse(_ response: AFDataResponse<Data>, startTime: Date) {
+    var lines: [String] = []
+
+    let elapsedMs = Int(Date().timeIntervalSince(startTime) * 1000)
+    let elapsed = "\(elapsedMs)ms"
+
+    if let request = response.request {
+      lines.append("➡️ REQUEST [\(request.httpMethod ?? "UNKNOWN")] \(request.url?.absoluteString ?? "UNKNOWN URL")")
+      if let headers = request.allHTTPHeaderFields {
+        lines.append("Headers:")
+        for (key, value) in headers {
+          lines.append("  \(key): \(value)")
+        }
+      }
+      if let body = request.httpBody, let bodyString = String(data: body, encoding: .utf8) {
+        lines.append("Body:")
+        lines.append(bodyString)
+      }
+    } else {
+      lines.append("⚠️ No request data available")
+    }
+
+    if let httpResponse = response.response {
+      lines.append("⬅️ RESPONSE Status: \(httpResponse.statusCode) (\(elapsed))")
+      for (key, value) in httpResponse.allHeaderFields {
+        lines.append("  \(key): \(value)")
+      }
+    } else {
+      lines.append("⚠️ No HTTP response")
+    }
+
+    if let data = response.data, !data.isEmpty {
+      lines.append("📜 Body:")
+      if let string = String(data: data, encoding: .utf8) {
+        lines.append(string)
+      } else {
+        lines.append("(Non-UTF8 or binary data)")
+      }
+    } else {
+      lines.append("📜 Empty response body.")
+    }
+
+    if let error = response.error {
+      lines.append("❌ ERROR: \(error.localizedDescription)")
+    }
+
+    prettyPrint("API Call", lines)
+  }
+
   private func track(_ request: URLRequest) async -> TrackedRequest {
     let tracked = TrackedRequest(request: request)
     await MainActor.run {
@@ -283,6 +335,14 @@ public final class APIClient: ObservableObject {
     await MainActor.run {
       self.activeRequests.removeAll { $0.id == tracked.id }
     }
+  }
+
+  private func prettyPrint(_ title: String, _ lines: [String]) {
+    print("\n========== [\(title)] ==========")
+    for line in lines {
+      print(line)
+    }
+    print("========== [End \(title)] ==========\n")
   }
 }
 

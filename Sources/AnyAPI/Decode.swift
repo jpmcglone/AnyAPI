@@ -22,8 +22,7 @@ func decode<E: Endpoint>(
     return try endpoint.decoder.decode(E.Response.self, from: data)
 
   } catch let error as DecodingError {
-    // 🔥 pretty-print once, then re-throw a wrapped error
-    print(pretty(description: error, in: data))
+    print(pretty(description: error, in: data, decodingType: E.Response.self))
     throw AnyAPIError.decoding(error)
   }
 }
@@ -47,27 +46,34 @@ enum AnyAPIError: LocalizedError {
   }
 }
 
-private func pretty(description error: DecodingError, in data: Data) -> String {
+private func pretty<E>(
+  description error: DecodingError,
+  in data: Data,
+  decodingType: E.Type
+) -> String {
   func path(_ ctx: DecodingError.Context) -> String {
     ctx.codingPath.map(\.stringValue).joined(separator: " → ")
   }
 
+  let baseMessage: String
+
   switch error {
   case .keyNotFound(let key, let ctx):
-    return "❌ Missing key '\(key.stringValue)' at path «\(path(ctx))»."
-
+    baseMessage = "❌ Missing key '\(key.stringValue)' at path «\(path(ctx))» while decoding \(E.self)."
   case .typeMismatch(let type, let ctx):
-    return "❌ Type mismatch. Expected «\(type)» at path «\(path(ctx))». \(ctx.debugDescription)"
-
+    baseMessage = "❌ Type mismatch. Expected «\(type)» at path «\(path(ctx))» while decoding \(E.self). \(ctx.debugDescription)"
   case .valueNotFound(let type, let ctx):
-    return "❌ Null/empty value for «\(type)» at path «\(path(ctx))»."
-
+    baseMessage = "❌ Null/empty value for «\(type)» at path «\(path(ctx))» while decoding \(E.self)."
   case .dataCorrupted(let ctx):
-    return "❌ Data corrupted at path «\(path(ctx))»: \(ctx.debugDescription)"
+    baseMessage = "❌ Data corrupted at path «\(path(ctx))» while decoding \(E.self): \(ctx.debugDescription)"
   @unknown default:
-    return "❌ Unknown decoding error: \(error)"
+    baseMessage = "❌ Unknown decoding error: \(error) while decoding \(E.self)."
   }
 
-  let snippet = String(data: data.prefix(500), encoding: .utf8) ?? ""
-  print("↳ JSON snippet:\n", snippet)
+  let snippet = String(data: data.prefix(500), encoding: .utf8) ?? "n/a"
+  return """
+  \(baseMessage)
+  ↳ JSON snippet:
+  \(snippet)
+  """
 }
