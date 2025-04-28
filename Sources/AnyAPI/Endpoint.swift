@@ -11,6 +11,7 @@ public protocol Endpoint: Encodable {
   var decoder: JSONDecoder { get }
 
   func decode(_ data: Data) throws -> Response
+  func asParameters() throws -> Parameters
 }
 
 public extension Endpoint {
