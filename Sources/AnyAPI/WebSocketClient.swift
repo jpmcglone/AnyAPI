@@ -29,6 +29,7 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
   private let url: URL
   private var task: URLSessionWebSocketTask?
   private var session: URLSession!
+  private let coding: APICodingConfig
   private var eventHandler: ((WebSocketEvent) -> Void)?
   private var pingTimer: Timer?
   private var intentionallyClosed = false
@@ -54,9 +55,14 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
   private var waitingForFirstMessageTask: Task<Void, Never>?
   private var pingRetryTask: Task<Void, Never>?
 
-  public init(url: URL, ignoreMessageTypes: [String] = []) {
+  public init(
+    url: URL,
+    ignoreMessageTypes: [String] = [],
+    coding: APICodingConfig = .default
+  ) {
     self.url = url
     self.ignoreMessageTypes = ignoreMessageTypes
+    self.coding = coding
     super.init()
     self.session = URLSession(configuration: .default, delegate: self, delegateQueue: .main)
   }
@@ -263,7 +269,7 @@ public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObje
 
   public func send<T: Encodable>(_ object: T) {
     do {
-      let data = try JSONEncoder().encode(object)
+      let data = try coding.encoder.encode(object)
       if let jsonString = String(data: data, encoding: .utf8) {
         send(jsonString)
       } else {

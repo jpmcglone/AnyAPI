@@ -4,6 +4,7 @@ import Foundation
 public final class APIClient: ObservableObject {
   public let baseURL: URL
   public let session: Session
+  private let coding: APICodingConfig
   private var defaultHeadersProvider: () -> HTTPHeaders
 
   @Published public private(set) var activeRequests: [TrackedRequest] = []
@@ -15,11 +16,13 @@ public final class APIClient: ObservableObject {
   public init(
     baseURL: URL,
     session: Session = .default,
-    defaultHeaders: @escaping () -> HTTPHeaders
+    defaultHeaders: @escaping () -> HTTPHeaders,
+    coding: APICodingConfig = .default
   ) {
     self.baseURL = baseURL
     self.session = session
     self.defaultHeadersProvider = defaultHeaders
+    self.coding = coding
   }
 
   public var defaultHeaders: HTTPHeaders {
@@ -120,7 +123,7 @@ public final class APIClient: ObservableObject {
         }
 
         // 🧹 Finally decode only if status is OK
-        let decoded = try decode(endpoint, options: options, data: data)
+        let decoded = try coding.decoder.decode(E.Response.self, from: data)
         return decoded
 
       case .failure(let error):
@@ -223,7 +226,7 @@ public final class APIClient: ObservableObject {
       if delay > 0 {
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
       }
-      let decoded = try decode(endpoint, options: options, data: data)
+      let decoded = try coding.decoder.decode(E.Response.self, from: data)
       return decoded
 
     case .failure(let error, let delay):
