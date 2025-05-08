@@ -1,6 +1,7 @@
 import Alamofire
 import Foundation
 
+@MainActor
 public final class APIClient: ObservableObject {
   public let baseURL: URL
   public let session: Session

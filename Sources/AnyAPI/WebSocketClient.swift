@@ -25,6 +25,7 @@ public enum ConnectionState: Equatable {
   case disconnected, disconnecting, connecting, connected, reconnecting, failed(String), gaveUp
 }
 
+@MainActor
 public final class WebSocketClient: NSObject, URLSessionDelegate, ObservableObject {
   private let url: URL
   private var task: URLSessionWebSocketTask?
