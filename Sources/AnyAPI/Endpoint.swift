@@ -1,7 +1,6 @@
 import Alamofire
 import Foundation
 
-
 public protocol Endpoint: Encodable {
   associatedtype Response: Decodable
 
@@ -28,8 +27,6 @@ public extension Endpoint {
   }
 
   func asParameters() throws -> Parameters {
-    let data = try JSONEncoder().encode(self)
-    let json = try JSONSerialization.jsonObject(with: data, options: [])
-    return json as? Parameters ?? [:]
+    [:]
   }
 }
