@@ -181,3 +181,109 @@ MIT License. See LICENSE file.
 ---
 
 🚀 **Happy shipping!**
+
+## Enhanced Error Handling
+
+AnyAPI now provides robust HTTP error handling with the `HTTPError` structure that captures response data even for non-200 status codes.
+
+### Basic Error Handling
+
+```swift
+do {
+    let response = try await client(endpoint).run
+    // Handle successful response
+} catch let httpError as HTTPError {
+    print("HTTP Status: \(httpError.statusCode)")
+    print("Response Body: \(httpError.responseBody ?? "No body")")
+    
+    // Extract error message from common JSON formats
+    if let errorMessage = httpError.extractErrorMessage() {
+        print("Error: \(errorMessage)")
+    }
+    
+    // Check specific error types
+    if httpError.isUnauthorized {
+        // Handle 401 errors
+    } else if httpError.isNotFound {
+        // Handle 404 errors
+    } else if httpError.isServerError {
+        // Handle 5xx errors
+    }
+} catch {
+    // Handle other errors (network failures, etc.)
+    print("Network error: \(error)")
+}
+```
+
+### Decoding Error Response Bodies
+
+You can decode structured error responses:
+
+```swift
+struct APIErrorResponse: Codable {
+    let error: String
+    let code: Int
+    let details: [String]?
+}
+
+do {
+    let response = try await client(endpoint).run
+} catch let httpError as HTTPError {
+    do {
+        let errorResponse = try httpError.decodeError(as: APIErrorResponse.self)
+        print("API Error: \(errorResponse.error)")
+        print("Error Code: \(errorResponse.code)")
+    } catch {
+        // Fallback to extracting simple error message
+        let message = httpError.extractErrorMessage() ?? "Unknown error"
+        print("Error: \(message)")
+    }
+}
+```
+
+### HTTPError Properties
+
+The `HTTPError` struct provides comprehensive information about failed requests:
+
+```swift
+public struct HTTPError: Error {
+    public let statusCode: Int              // HTTP status code
+    public let data: Data?                  // Raw response body data
+    public let response: HTTPURLResponse?   // Full HTTP response
+    public let underlyingError: Error?      // Original error (if any)
+    
+    // Convenience properties
+    public var isClientError: Bool          // 4xx errors
+    public var isServerError: Bool          // 5xx errors  
+    public var isUnauthorized: Bool         // 401 errors
+    public var isForbidden: Bool            // 403 errors
+    public var isNotFound: Bool             // 404 errors
+    public var responseBody: String?        // Response as string
+    
+    // Utility methods
+    public func extractErrorMessage() -> String?
+    public func decodeError<T: Codable>(as type:) throws -> T
+}
+```
+
+### Backward Compatibility
+
+The original `AnyAPIError` enum is still available for backward compatibility and now includes bridging to `HTTPError`:
+
+```swift
+catch let error as AnyAPIError {
+    switch error {
+    case .http(let httpError):
+        // New HTTPError wrapped in legacy enum
+        print("HTTP Error: \(httpError.statusCode)")
+    case .unauthorized:
+        // Legacy unauthorized handling
+    case .server(let message):
+        // Legacy server error handling
+    case .decoding(let decodingError):
+        // Decoding error handling
+    case .custom(let message):
+        // Custom error handling
+    }
+}
+```

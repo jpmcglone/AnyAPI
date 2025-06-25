@@ -20,6 +20,7 @@ final class AnyAPITests: XCTestCase {
     }
   }
 
+  @MainActor
   func makeClient() -> APIClient {
     APIClient(
       baseURL: URL(string: "https://httpbin.org")!,
@@ -29,8 +30,8 @@ final class AnyAPITests: XCTestCase {
   }
 
   func testMergesDefaultAndAdditionalHeaders() async throws {
-    let client = makeClient()
-    let builder = client(DummyEndpoint(payload: "Hello"))
+    let client = await makeClient()
+    let builder = await client(DummyEndpoint(payload: "Hello"))
       .additionalHeaders(["X-Custom": "Yes"])
 
     let mirror = Mirror(reflecting: builder)
@@ -39,8 +40,8 @@ final class AnyAPITests: XCTestCase {
   }
 
   func testOverridesHeaders() async throws {
-    let client = makeClient()
-    let builder = client(DummyEndpoint(payload: "Hello"))
+    let client = await makeClient()
+    let builder = await client(DummyEndpoint(payload: "Hello"))
       .overrideHeaders(["X-Override": "Only"])
 
     let mirror = Mirror(reflecting: builder)
@@ -86,7 +87,7 @@ final class AnyAPITests: XCTestCase {
     throw XCTSkip("Temporarily skipping until mock 401 handling is fixed")
 
     var attemptCount = 0
-    let client = makeClient()
+    let client = await makeClient()
     let mockData = #"{"message":"Retry Success"}"#.data(using: .utf8)!
 
     let endpoint = DummyEndpoint(payload: "trigger")
@@ -115,10 +116,10 @@ final class AnyAPITests: XCTestCase {
     var didCallAuth = false
     var callCount = 0
 
-    let client = makeClient()
+    let client = await makeClient()
     let endpoint = DummyEndpoint(payload: "auth")
 
-    let builder = client(endpoint)
+    let builder = await client(endpoint)
       .mockIf(true) {
         callCount += 1
         if callCount == 1 {
@@ -154,7 +155,7 @@ final class AnyAPITests: XCTestCase {
   }
 
   func testInterceptorModifiesRequest() async throws {
-    let client = makeClient()
+    let client = await makeClient()
     let expectation = XCTestExpectation(description: "Interceptor called")
 
     _ = try await client(DummyEndpoint(payload: "intercept"))
@@ -168,11 +169,11 @@ final class AnyAPITests: XCTestCase {
   }
 
   func testProgressHandlerFires() async throws {
-    let client = makeClient()
+    let client = await makeClient()
     let progressExpectation = expectation(description: "Progress handler called")
     let flag = Flag()
 
-    let builder = client(DummyEndpoint(payload: "progress"))
+    let builder = await client(DummyEndpoint(payload: "progress"))
       .onProgress { _ in
         Task {
           if await flag.checkAndSet() {

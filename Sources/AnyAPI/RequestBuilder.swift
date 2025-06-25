@@ -102,10 +102,20 @@ public final class RequestBuilder<E: Endpoint> {
           data = try interceptor(data, httpResponse)
         }
 
+        // Check for HTTP error status codes
+        if let httpResponse = response.response,
+           (400..<600).contains(httpResponse.statusCode) {
+          throw HTTPError(
+            statusCode: httpResponse.statusCode,
+            data: data,
+            response: httpResponse
+          )
+        }
+
         let decoded = try decode(endpoint, options: options, data: data)
         return decoded
       case .failure(let error):
-        throw error
+        throw HTTPError.networkFailure(error)
       }
     }
 

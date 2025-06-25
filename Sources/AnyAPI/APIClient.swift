@@ -110,32 +110,39 @@ public final class APIClient: ObservableObject {
           data = try interceptor(data, httpResponse)
         }
 
-        // 🆕 FIRST → check if 4xx/5xx and surface error immediately
-        if let status = response.response?.statusCode,
-           (400..<600).contains(status),
-           !data.isEmpty,
-           let body = String(data: data, encoding: .utf8) {
-          throw AnyAPIError.server(body)
+        // Check if we have a non-success status code (4xx or 5xx)
+        if let httpResponse = response.response,
+           (400..<600).contains(httpResponse.statusCode) {
+          
+          // Create HTTPError with full response data
+          let httpError = HTTPError(
+            statusCode: httpResponse.statusCode,
+            data: data,
+            response: httpResponse
+          )
+          
+          // Handle specific 401 case for auth failure
+          if httpResponse.statusCode == 401,
+             let authHandler = options.authFailureHandler {
+            await authHandler(self)
+            throw RetryableError.shouldRetry
+          }
+          
+          // Throw the detailed HTTP error
+          throw httpError
         }
 
-        // 🆕 THEN check specifically 401
-        if response.response?.statusCode == 401 {
-          throw AnyAPIError.unauthorized
-        }
-
-        // 🧹 Finally decode only if status is OK
+        // Success case - decode the response
         let decoded = try coding.decoder.decode(E.Response.self, from: data)
         return decoded
 
       case .failure(let error):
-        if let status = response.response?.statusCode, status == 401,
-           let authHandler = options.authFailureHandler {
-          await authHandler(self)
-          throw RetryableError.shouldRetry
-        }
-
+        // Handle network failures and other Alamofire errors
+        // Most HTTP errors with response data will be handled in the success case above
+        // This case handles true network failures (timeouts, connection errors, etc.)
+        
         options.onErrorHandler?(error)
-        throw error
+        throw HTTPError.networkFailure(error)
       }
     }
   }
